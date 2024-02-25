@@ -1,5 +1,5 @@
 import AccountUserModel from '../../model/AccountUser.model.js'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import ProfilleController from '../Profile/Profile.controller.js'
 import ProfileModel from '../../model/Profile.model.js';
