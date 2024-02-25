@@ -8,12 +8,12 @@ import morgan from 'morgan'
 import appMiddleware from './src/middleware/app.middleware.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import {Redis} from 'ioredis'
 const hostname = process.env.SERVER_HOST;
 const port = process.env.SERVER_PORT || 8081;
 const app = express()
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 
 
@@ -26,6 +26,14 @@ app.use(bodyParser.urlencoded({
 
 //Connect to database
 db.connect()
+//connect to redis
+const redis = new Redis({
+    host: process.env.SERVER_HOST,
+    port: process.env.REDIS_PORT
+})
+redis.on("connect", () => {
+    console.log("Connect to redis successfully");
+})
 //cors
 app.use(cors());
 app.use(morgan('combined'))

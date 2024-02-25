@@ -31,7 +31,48 @@ class RoleController {
         }
     }
 
+    async GetAll(req,res,next) {
+        try {
+            const role = await RoleModel.find({
+                deleted: false
+            }).exec();    
+            console.log(role);
+            return role != null ? res.status(200).json({
+                statusCode: 200,
+                data: role,
+                message: "Successfully!"
+            }) : res.status(204).json({
+                statusCode: 204,
+                message: "get role unsuccessfully!"
+            })
+        } catch(error) {
+            return res.status(500).json({
+                statusCode: 500,
+                message: error.message
+            })
+        }
+    }
 
+    async UpdateRole(req,res,next) {
+        try {
+            let roleNew = new RoleModel(req.body)
+            roleNew.updateat = Date.now;
+            const role = await RoleModel.findByIdAndUpdate(roleNew._id,roleNew).exec();    
+            return role != null ? res.status(200).json({
+                statusCode: 200,
+                data: role,
+                message: "Successfully!"
+            }) : res.status(204).json({
+                statusCode: 204,
+                message: "Update unsuccessfully!"
+            })
+        } catch(error) {
+            return res.status(500).json({
+                statusCode: 500,
+                message: error.message
+            })
+        }
+    }
     
 
 }

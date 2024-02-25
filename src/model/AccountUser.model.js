@@ -13,13 +13,13 @@ const AccountUserSchema = new Schema({
     createat: {type: Date, default: Date.now},
     updateat: {type: Date, default: null},
     deleteat: {type: Date, default: null},
-    deleted: {type: Number, default: 0},
+    deleted: {type: Boolean, default: false},
     roleId:  {type: String },
     refreshToken: {
         type: String,
         default: null
     }
-}, {id: true});
+}, {id: true, timestamps: true});
 
 export default mongoose.model('accountusers', AccountUserSchema)
 

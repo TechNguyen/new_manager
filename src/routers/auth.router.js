@@ -6,4 +6,6 @@ const auth = new authController();
 
 router.post('/sign-up', auth.signUp)
 router.post('/sign-in', auth.signIn)
+router.get('/accounts', auth.GetAllAccount)
+router.post('/reset-pass/:id', auth.ResetPassWord)
 export default router

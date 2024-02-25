@@ -16,6 +16,14 @@ class Common {
         return excelData;
     }
 
+    responStatus(message,data,status) {
+        return {
+            msg: message,
+            data: data,
+            status: status
+        }
+    }
+
 }
 
 

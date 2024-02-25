@@ -5,5 +5,7 @@ const router = express.Router();
 const role = new RoleController();
 
 router.post('/create', role.CreateRole)
+router.get('/all', role.GetAll)
+router.put('/edit', role.UpdateRole)
 
 export default router
