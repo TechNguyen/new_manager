@@ -3,8 +3,17 @@ import BlogModel from "../../model/Blog.model.js"
 import redis from 'redis'
 
 
-
-
+const client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    username: process.env.REDIS_USER,
+    username: process.env.REDIS_USER
+  });
+  
+// Event listener to handle Redis errors
+client.on('error', (err) => {
+console.error('Redis error:', err);
+});
   
 class BlogController {
     async GetBlogbyPage(req,res,next) {
@@ -126,59 +135,40 @@ class BlogController {
     async FindById(req,res,next) {
         try {
             const _id = req.query.id;
-            // client.get(_id, async(err, cache) => {
-            //     if(err) {
-            //         return res.status(404).json({
-            //             msg: "Error in cache"
-            //         })
-            //     }
-            //     if(cache) {
-            //         return res.status(200).json({
-            //             data: JSON.parse(cachedBlog),
-            //             status: 200,
-            //             msg: "Get the cache successfully!"
-            //         });
-            //     } else {
-            //         const Blog = await BlogModel.findOne(
-            //             {
-            //                 _id: _id,
-            //                 deleted: false
-            //             }
-            //         ).exec();
-            //         if(Blog == null) {
-            //             return res.status(203).json({
-            //                 msg: "Not exits blog",
-            //                 status: 203
-            //             })
-            //         } else {
-            //             client.setEx(_id, 3600,JSON.stringify(Blog))
-            //             return res.status(200).json({
-            //                 data: Blog,
-            //                 status: 200,
-            //                 msg: "Get the blog successfully!"
-            //             })
-            //         }
-            //     }
-            // })
-            const Blog = await BlogModel.findOne(
-                {
-                    _id: _id,
-                    deleted: false
+            client.get(_id, async(err, cache) => {
+                if(err) {
+                    return res.status(404).json({
+                        msg: "Error in cache"
+                    })
                 }
-            ).exec();
-            if(Blog == null) {
-                return res.status(203).json({
-                    msg: "Not exits blog",
-                    status: 203
-                })
-            } else {
-                // client.setEx(_id, 3600,JSON.stringify(Blog))
-                return res.status(200).json({
-                    data: Blog,
-                    status: 200,
-                    msg: "Get the blog successfully!"
-                })
-            }
+                if(cache) {
+                    return res.status(200).json({
+                        data: JSON.parse(cachedBlog),
+                        status: 200,
+                        msg: "Get the cache successfully!"
+                    });
+                } else {
+                    const Blog = await BlogModel.findOne(
+                        {
+                            _id: _id,
+                            deleted: false
+                        }
+                    ).exec();
+                    if(Blog == null) {
+                        return res.status(203).json({
+                            msg: "Not exits blog",
+                            status: 203
+                        })
+                    } else {
+                        client.setEx(_id, 3600,JSON.stringify(Blog))
+                        return res.status(200).json({
+                            data: Blog,
+                            status: 200,
+                            msg: "Get the blog successfully!"
+                        })
+                    }
+                }
+            })
         } catch(error) {
             return res.status(500).json({
                 msg: error.message
