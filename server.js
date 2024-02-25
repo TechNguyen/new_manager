@@ -28,8 +28,10 @@ app.use(bodyParser.urlencoded({
 db.connect()
 //connect to redis
 const redis = new Redis({
-    host: process.env.SERVER_HOST,
-    port: process.env.REDIS_PORT
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    username: process.env.REDIS_USER,
+    password: process.env.REDIS_PASSWORD
 })
 redis.on("connect", () => {
     console.log("Connect to redis successfully");
