@@ -33,9 +33,7 @@ const redis = new Redis({
     username: process.env.REDIS_USER,
     password: process.env.REDIS_PASSWORD
 })
-redis.on("connect", () => {
-    console.log("Connect to redis successfully");
-})
+
 //cors
 app.use(cors());
 app.use(morgan('combined'))
