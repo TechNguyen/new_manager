@@ -1,5 +1,14 @@
 import redis from 'redis'
 
-const client = new Redis('rediss://red-cndj5s6n7f5s73blj3m0:gtsPFzBiA3wUMxWuYT1JASM1vLmwcKhW@frankfurt-redis.render.com:6379');
+
+const client = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    username: process.env.REDIS_USER,
+    password: process.env.REDIS_PASSWORD
+  });
   
-export default client
+
+
+
+export default client; 
