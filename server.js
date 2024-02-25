@@ -27,6 +27,7 @@ app.use(bodyParser.urlencoded({
 //Connect to database
 db.connect()
 //connect to redis
+client.connect();
 
 //cors
 app.use(cors());
@@ -34,11 +35,6 @@ app.use(morgan('combined'))
 //Route
 appMiddleware(app);
 Route(app);
-
-
-client.on('connect', () => {
-    console.error('Redis connect');
-});
 
 
 //static file
