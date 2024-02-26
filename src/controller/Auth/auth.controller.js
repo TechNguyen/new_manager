@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import ProfilleController from '../Profile/Profile.controller.js'
 import ProfileModel from '../../model/Profile.model.js';
+import RoleModel from '../../model/Role.model.js';
 const profile = new ProfilleController();
 
 class authController {
@@ -56,15 +57,20 @@ class authController {
                 if(check) {
                     let profileUser = await profile.GetPofileAuth(account.id);
                     let accesstoken = "";
+
                     if(profileUser) {
                         accesstoken = jwt.sign({
                             username: account.username,
                             profile: profileUser,
                         }, process.env.JWT_KEY , { expiresIn: '3h' })
+                        let role = await RoleModel.findOne({
+                            id: account.roleId
+                        }).exec();
                         return res.status(200).json({
                             statuscode: 200,
                             data: {
-                                accesstoken: accesstoken
+                                accesstoken: accesstoken,
+                                role: role
                             },
                             message: "Successfully!"
                         })

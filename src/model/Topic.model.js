@@ -9,7 +9,7 @@ const topic = new Schema(
         deleteat: {type: Date},
         update: {type: Boolean, default: false},
         delete: {type: Boolean, default: false},
-    }, 
+    },  
     {id: true}
 )
 

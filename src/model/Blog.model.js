@@ -9,9 +9,9 @@ const blog = new Schema({
     Content: {
         type: String,
     },
-    BlogImages: {type: String},
+    BlogImages: {type: String, default: null},
     AuthorId: {type: String},
-    Topic: {type: String},
+    TopicId: {type: String},
     updated: {type: Boolean},
     deleted: {type: Boolean, default: false},
     deleteAt: {type: Date}

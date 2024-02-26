@@ -10,6 +10,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import {Redis} from 'ioredis'
 
+// const hostname = process.env.SERVER_HOST;
 const port = process.env.SERVER_PORT || 8081;
 const app = express()
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +41,6 @@ Route(app);
 app.use(express.static(path.join(__dirname,'public')));
 
 //config route
-app.listen(port, () => {
+app.listen(port,  () => {
     console.log(`Server start on ${port}`)
 })  

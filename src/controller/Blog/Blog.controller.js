@@ -18,7 +18,8 @@ console.error('Redis error:', err);
 class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
-            let { pageSize , pageIndex} = req.query
+            let { pageSize , pageIndex} = req.query;
+            let topicId = req.body.topicId;
             const total = await BlogModel.countDocuments({deleted: false});
             if((pageSize * 1) <= 0 || !Boolean(pageSize)) {
                 pageSize = 10;
@@ -26,8 +27,24 @@ class BlogController {
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
+
             if(pageIndex != null && pageSize != null) {
                 var list = await BlogModel.find({deleted: false}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
+                if(topicId != null) {
+                    var newListv1 = [];
+                    list.forEach(item => {
+                        if(item.TopicId == topicId) {
+                            newListv1.push(item)
+                        }
+                    })
+                    return res.status(200).json({
+                        msg: "Get products successfully!",
+                        total: total,
+                        pageSize: pageSize * 1,
+                        pageIndex: pageIndex * 1,
+                        products: newListv1
+                    })
+                }
                 return res.status(200).json({
                     msg: "Get blogs successfully!",
                     total: total,
@@ -37,6 +54,21 @@ class BlogController {
                 })
             }
             var list = await BlogModel.find({deleted: false}).exec();
+            if(topicId != null) {
+                var newList = [];
+                list.forEach(item => {
+                    if(item.TopicId == topicId) {
+                        newList.push(item)
+                    }
+                })
+                return res.status(200).json({
+                    msg: "Get products successfully!",
+                    total: total,
+                    pageSize: pageSize * 1,
+                    pageIndex: pageIndex * 1,
+                    products: newList
+                })
+            }
             return res.status(200).json({
                 msg: "Get products successfully!",
                 total: total,
@@ -53,15 +85,15 @@ class BlogController {
     async CreatePro(req,res,next) {
         try {
             let BlogMD = new BlogModel(req.body);
-            let filepath = req.file.path;
-            BlogMD.BlogImages = filepath;
+            console.log(BlogMD);
+
             let rs = await BlogModel.create(BlogMD);
             return res.status(200).json({
                 data: rs,
                 msg: "Create blog successfully!"
             })
         } catch (error) {
-            return res.json(500).status({
+            return res.status(500).json({
                 msg: error.message
             })
         }
