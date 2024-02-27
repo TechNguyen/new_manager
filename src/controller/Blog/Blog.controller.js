@@ -1,7 +1,7 @@
 import multer from "multer";
 import BlogModel from "../../model/Blog.model.js"
 import redis from 'redis'
-
+import AccountUserModel from "../../model/AccountUser.model.js";
 
 const client = redis.createClient({
     host: process.env.REDIS_HOST,
@@ -12,14 +12,16 @@ const client = redis.createClient({
   
 // Event listener to handle Redis errors
 client.on('error', (err) => {
-console.error('Redis error:', err);
+    console.error('Redis error:', err);
 });
   
 class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
-            let { pageSize , pageIndex} = req.query;
-            let topicId = req.body.topicId;
+            let { pageSize , pageIndex, topicId} = req.body;
+
+
+            console.log(pageSize,pageIndex,topicId);
             const total = await BlogModel.countDocuments({deleted: false});
             if((pageSize * 1) <= 0 || !Boolean(pageSize)) {
                 pageSize = 10;
@@ -27,16 +29,22 @@ class BlogController {
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
-
-            if(pageIndex != null && pageSize != null) {
+            if(pageIndex && pageSize) {
                 var list = await BlogModel.find({deleted: false}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
-                if(topicId != null) {
+                if(topicId) {
                     var newListv1 = [];
-                    list.forEach(item => {
+                    for(const item of list) {
                         if(item.TopicId == topicId) {
-                            newListv1.push(item)
+                            let author =  await AccountUserModel.findOne({
+                                    _id : item.AuthorId
+                            }).exec();
+                            newListv1.push({
+                                blog: item,
+                                author: author
+                            })
                         }
-                    })
+                    }
+                  
                     return res.status(200).json({
                         msg: "Get products successfully!",
                         total: total,
@@ -44,23 +52,45 @@ class BlogController {
                         pageIndex: pageIndex * 1,
                         products: newListv1
                     })
+                } else {
+
+                    var newListv1 = [];
+                    for(const item of list) {
+                        let author =  await AccountUserModel.findOne({
+                                _id : item.AuthorId
+                        }).exec();
+                        newListv1.push({
+                            blog: item,
+                            author: author
+                        })
+                    }
+                    return res.status(200).json({
+                        msg: "Get blogs successfully!",
+                        total: total,
+                        pageSize: pageSize * 1,
+                        pageIndex: pageIndex * 1,
+                        products: newListv1
+                    })
                 }
-                return res.status(200).json({
-                    msg: "Get blogs successfully!",
-                    total: total,
-                    pageSize: pageSize * 1,
-                    pageIndex: pageIndex * 1,
-                    products: list
-                })
+               
             }
             var list = await BlogModel.find({deleted: false}).exec();
-            if(topicId != null) {
+            if(topicId) {
                 var newList = [];
-                list.forEach(item => {
+
+                for(const item of list) {
                     if(item.TopicId == topicId) {
-                        newList.push(item)
+                        let author = await AccountUserModel.findOne({
+                            id : item.AuthorId
+                        }).exec();
+                        newList.push({
+                            blog: item,
+                            author: author
+                        })
                     }
-                })
+                    
+                }
+               
                 return res.status(200).json({
                     msg: "Get products successfully!",
                     total: total,
@@ -68,16 +98,29 @@ class BlogController {
                     pageIndex: pageIndex * 1,
                     products: newList
                 })
+            } else {
+                var newList = [];
+                for(const item of list) {
+                    let author = await AccountUserModel.findOne({
+                        id : item.AuthorId
+                    }).exec();
+                    newList.push({
+                        blog: item,
+                        author: author
+                    })
+                }
+                return res.status(200).json({
+                    msg: "Get products successfully!",
+                    total: total,
+                    pageSize: pageSize * 1,
+                    pageIndex: pageIndex * 1,
+                    products: newList
+                })
+
             }
-            return res.status(200).json({
-                msg: "Get products successfully!",
-                total: total,
-                pageSize: pageSize * 1,
-                pageIndex: pageIndex * 1,
-                products: list
-            })
+           
         } catch (error) {
-            return res.json(500).status({
+            return res.status(500).json({
                 msg: error.message
             })
         }
@@ -85,8 +128,6 @@ class BlogController {
     async CreatePro(req,res,next) {
         try {
             let BlogMD = new BlogModel(req.body);
-            console.log(BlogMD);
-
             let rs = await BlogModel.create(BlogMD);
             return res.status(200).json({
                 data: rs,
@@ -117,7 +158,6 @@ class BlogController {
     async DeleteSoft(req,res,next) {
         try {
             const id = req.params.id;
-            console.log(id);
             let updatePro = await BlogModel.findOne({
                 _id: id,
                 deleted: false

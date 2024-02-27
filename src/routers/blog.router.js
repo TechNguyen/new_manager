@@ -12,4 +12,3 @@ router.put('/update/:id', blog.Update)
 router.delete('/deletesoft/:id', blog.DeleteSoft)
 router.delete('/delete/:id', blog.Delete)
 export default router;
-

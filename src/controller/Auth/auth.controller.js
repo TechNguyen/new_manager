@@ -57,7 +57,6 @@ class authController {
                 if(check) {
                     let profileUser = await profile.GetPofileAuth(account.id);
                     let accesstoken = "";
-
                     if(profileUser) {
                         accesstoken = jwt.sign({
                             username: account.username,
