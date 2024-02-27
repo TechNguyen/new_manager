@@ -158,10 +158,11 @@ class authController {
 
     async DeleteAccount(req,res,next) {
          try {
-            const id = req.querry.id;
+            const id = req.query.id;
             const account = await AccountUserModel.findOne({
                 _id:id 
             }).exec();
+
             if(!account) {
                 return res.status(200).json({
                     msg: "Not exists account!"
