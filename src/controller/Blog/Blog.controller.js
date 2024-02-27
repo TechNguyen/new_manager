@@ -19,9 +19,6 @@ class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
             let { pageSize , pageIndex, topicId} = req.body;
-
-
-            console.log(pageSize,pageIndex,topicId);
             const total = await BlogModel.countDocuments({deleted: false});
             if((pageSize * 1) <= 0 || !Boolean(pageSize)) {
                 pageSize = 10;
