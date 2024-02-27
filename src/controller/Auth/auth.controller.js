@@ -158,7 +158,7 @@ class authController {
 
     async DeleteAccount(req,res,next) {
          try {
-            const id = req.body.id;
+            const id = req.querry.id;
             const account = await AccountUserModel.findOne({
                 _id:id 
             }).exec();
@@ -170,8 +170,6 @@ class authController {
             const accountCheck = await AccountUserModel.deleteOne({
                 _id:id
             }).exec();
-
-            console.log(accountCheck);
             return !accountCheck.acknowledged ? res.status(201).json({
                 msg: "Delete failed!"
             }) : res.status(200).json({
