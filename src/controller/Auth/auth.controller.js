@@ -9,7 +9,7 @@ const profile = new ProfilleController();
 class authController {
     async signUp(req,res, next) {
         try {
-            let {username,password} = req.body
+            let {username,password,roleId} = req.body
             let hashpass = await bcrypt.hash(password, 13);
             let user = await AccountUserModel.find({ username: username})
             if(user.length != 0) {
@@ -20,7 +20,8 @@ class authController {
             } else {
                 const acc = await AccountUserModel.create({
                     username: username,
-                    password: hashpass
+                    password: hashpass,
+                    roleId: roleId
                 })
                 if(acc != null) {
                     const profile = new ProfileModel({
@@ -62,17 +63,22 @@ class authController {
                             username: account.username,
                             profile: profileUser,
                         }, process.env.JWT_KEY , { expiresIn: '3h' })
-                        let role = await RoleModel.findOne({
-                            id: account.roleId
+
+                        const role = await RoleModel.findOne({
+                            _id: account.roleId
                         }).exec();
-                        return res.status(200).json({
-                            statuscode: 200,
-                            data: {
-                                accesstoken: accesstoken,
-                                role: role
-                            },
-                            message: "Successfully!"
-                        })
+                        
+                        if(role) {
+                            return res.status(200).json({
+                                statuscode: 200,
+                                data: {
+                                    accesstoken: accesstoken,
+                                    role: role
+                                },
+                                message: "Successfully!"
+                            })
+                        }
+                        
                     } else {
                         return res.status(200).json({
                             statuscode: 200,
@@ -148,6 +154,34 @@ class authController {
                 status: 500
             })
         }
+    }
+
+    async DeleteAccount(req,res,next) {
+         try {
+            const id = req.body.id;
+            const account = await AccountUserModel.findOne({
+                _id:id 
+            }).exec();
+            if(!account) {
+                return res.status(200).json({
+                    msg: "Not exists account!"
+                })
+            }
+            const accountCheck = await AccountUserModel.deleteOne({
+                _id:id
+            }).exec();
+
+            console.log(accountCheck);
+            return !accountCheck.acknowledged ? res.status(201).json({
+                msg: "Delete failed!"
+            }) : res.status(200).json({
+                msg: "Delete success!"
+            })
+         } catch(error) {
+            return res.status(500).json({
+                msg: error
+            })
+         }
     }
 }
 export default authController

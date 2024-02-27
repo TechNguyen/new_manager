@@ -18,14 +18,21 @@ client.on('error', (err) => {
 class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
-            let { pageSize , pageIndex, topicId} = req.body;
-            const total = await BlogModel.countDocuments({deleted: false});
+            let { pageSize,pageIndex,topicId} = req.query;
             if((pageSize * 1) <= 0 || !Boolean(pageSize)) {
                 pageSize = 10;
             }
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
+            let totalPage;
+            let total = await BlogModel.countDocuments({deleted: false});
+            if(total <= pageSize) {
+                totalPage = 1
+            } else {
+                totalPage = Math.floor(total / pageSize) + 1;
+            }
+
             if(pageIndex && pageSize) {
                 var list = await BlogModel.find({deleted: false}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
                 if(topicId) {
@@ -41,13 +48,26 @@ class BlogController {
                             })
                         }
                     }
-                  
+
+
+                    total = newListv1.length;
+                    if(total == pageSize) {
+                        totalPage = 1;
+                    } else  {
+                        totalPage = Math.floor(total / pageSize) + 1;
+                        
+                    }
+
+
+
+
                     return res.status(200).json({
                         msg: "Get products successfully!",
-                        total: total,
+                        totalItem: total,
                         pageSize: pageSize * 1,
                         pageIndex: pageIndex * 1,
-                        products: newListv1
+                        products: newListv1,
+                        totalPage: totalPage
                     })
                 } else {
 
@@ -61,12 +81,21 @@ class BlogController {
                             author: author
                         })
                     }
+                    total = newListv1.length;
+                    if(total == pageSize) {
+                        totalPage = 1;
+                    } else  {
+                        totalPage = Math.floor(total / pageSize) + 1;
+                        
+                    }
                     return res.status(200).json({
                         msg: "Get blogs successfully!",
-                        total: total,
+                        totalItem: total,
                         pageSize: pageSize * 1,
                         pageIndex: pageIndex * 1,
-                        products: newListv1
+                        products: newListv1,
+                        totalPage: totalPage
+
                     })
                 }
                
@@ -87,13 +116,21 @@ class BlogController {
                     }
                     
                 }
-               
+                total = newList.length;
+                if(total == pageSize) {
+                    totalPage = 1;
+                } else  {
+                    totalPage = Math.floor(total / pageSize) + 1;
+                    
+                }
                 return res.status(200).json({
                     msg: "Get products successfully!",
-                    total: total,
+                    totalItem: total,
                     pageSize: pageSize * 1,
                     pageIndex: pageIndex * 1,
-                    products: newList
+                    products: newList,
+                    totalPage: totalPage
+
                 })
             } else {
                 var newList = [];
@@ -106,16 +143,23 @@ class BlogController {
                         author: author
                     })
                 }
+                total = newList.length;
+                if(total == pageSize) {
+                    totalPage = 1;
+                } else  {
+                    totalPage = Math.floor(total / pageSize) + 1;
+                    
+                }
+
                 return res.status(200).json({
                     msg: "Get products successfully!",
-                    total: total,
+                    totalItem: total,
                     pageSize: pageSize * 1,
                     pageIndex: pageIndex * 1,
-                    products: newList
+                    products: newList,
+                    totalPage: totalPage
                 })
-
             }
-           
         } catch (error) {
             return res.status(500).json({
                 msg: error.message
@@ -145,7 +189,10 @@ class BlogController {
                 runValidators: true,
             }).exec();
             await updatePro.save();
-            return res.status(203).json(updatePro)
+            return res.status(200).json({
+                msg: "Update success",
+                blog: data
+            })
         } catch (error) {
             return res.status(500).json({
                 msg: error.message
