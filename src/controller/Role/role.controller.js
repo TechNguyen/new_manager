@@ -74,7 +74,14 @@ class RoleController {
         }
     }
     
-
+    async GetRole(accountId) {
+        try {
+            const role = await RoleModel.findOne({_id:accountId}).exec();
+            return role ? role : null;
+        } catch (error) {
+            throw null;
+        }
+    }
 }
 
 export default RoleController

@@ -3,9 +3,9 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import ProfilleController from '../Profile/Profile.controller.js'
 import ProfileModel from '../../model/Profile.model.js';
-import RoleModel from '../../model/Role.model.js';
+import RoleController from '../Role/role.controller.js';
 const profile = new ProfilleController();
-
+const rolecontrol = new RoleController();
 class authController {
     async signUp(req,res, next) {
         try {
@@ -53,10 +53,12 @@ class authController {
                     statuscode: 401,
                     message: "Unauthorized!"
                 }) 
-            }else {
+            }
+            else {
+                let profileUser = await profile.GetPofileAuth(account.id);
+                let role = await rolecontrol.GetRole(account.roleId);
                 let check = await bcrypt.compare(password, account.password);
                 if(check) {
-                    let profileUser = await profile.GetPofileAuth(account.id);
                     let accesstoken = "";
                     if(profileUser) {
                         accesstoken = jwt.sign({
@@ -64,11 +66,7 @@ class authController {
                             profile: profileUser,
                         }, process.env.JWT_KEY , { expiresIn: '3h' })
 
-                        const role = await RoleModel.findOne({
-                            _id: account.roleId
-                        }).exec();
                         
-                        if(role) {
                             return res.status(200).json({
                                 statuscode: 200,
                                 data: {
@@ -77,14 +75,17 @@ class authController {
                                 },
                                 message: "Successfully!"
                             })
-                        }
-                        
+                       
                     } else {
-                        return res.status(200).json({
-                            statuscode: 200,
-                            data: account,
-                            message: "Successfully!"
-                        })
+                        
+                            return res.status(200).json({
+                                statuscode: 200,
+                                data: {
+                                    accesstoken: accesstoken,
+                                    role: role
+                                },
+                                message: "Successfully!"
+                            })
                     }
                 } else {
                     res.status(401).json({
@@ -155,7 +156,6 @@ class authController {
             })
         }
     }
-
     async DeleteAccount(req,res,next) {
          try {
             const id = req.query.id;

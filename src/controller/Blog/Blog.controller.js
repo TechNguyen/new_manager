@@ -25,52 +25,12 @@ class BlogController {
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
-            let totalPage;
-            let total = await BlogModel.countDocuments({deleted: false});
-            if(total <= pageSize) {
-                totalPage = 1
-            } else {
-                totalPage = Math.floor(total / pageSize) + 1;
-            }
+           
 
             if(pageIndex && pageSize) {
-                var list = await BlogModel.find({deleted: false}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
                 if(topicId) {
-                    var newListv1 = [];
-                    for(const item of list) {
-                        if(item.TopicId == topicId) {
-                            let author =  await AccountUserModel.findOne({
-                                    _id : item.AuthorId
-                            }).exec();
-                            newListv1.push({
-                                blog: item,
-                                author: author
-                            })
-                        }
-                    }
-
-
-                    total = newListv1.length;
-                    if(total == pageSize) {
-                        totalPage = 1;
-                    } else  {
-                        totalPage = Math.floor(total / pageSize) + 1;
-                        
-                    }
-
-
-
-
-                    return res.status(200).json({
-                        msg: "Get products successfully!",
-                        totalItem: total,
-                        pageSize: pageSize * 1,
-                        pageIndex: pageIndex * 1,
-                        products: newListv1,
-                        totalPage: totalPage
-                    })
-                } else {
-
+                    var listTong = await BlogModel.find({deleted: false,TopicId: topicId}).exec();
+                    var list = await BlogModel.find({deleted: false,TopicId: topicId}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
                     var newListv1 = [];
                     for(const item of list) {
                         let author =  await AccountUserModel.findOne({
@@ -81,12 +41,40 @@ class BlogController {
                             author: author
                         })
                     }
-                    total = newListv1.length;
-                    if(total == pageSize) {
-                        totalPage = 1;
-                    } else  {
+                    let totalPage;
+                    let total = listTong.length;
+                    if(total <= pageSize) {
+                        totalPage = 1
+                    } else {
                         totalPage = Math.floor(total / pageSize) + 1;
-                        
+                    }
+                    return res.status(200).json({
+                        msg: "Get products successfully!",
+                        totalItem: total,
+                        pageSize: pageSize * 1,
+                        pageIndex: pageIndex * 1,
+                        products: newListv1,
+                        totalPage: totalPage
+                    })
+                } else {
+                    var listTong1 = await BlogModel.find({deleted: false}).exec();
+                    var list = await BlogModel.find({deleted: false}).skip((pageIndex - 1) * pageSize).limit(pageSize).exec();
+                    var newListv1 = [];
+                    for(const item of list) {
+                        let author =  await AccountUserModel.findOne({
+                                _id : item.AuthorId
+                        }).exec();
+                        newListv1.push({
+                            blog: item,
+                            author: author
+                        })
+                    }
+                    let totalPage;
+                    let total = listTong1.length;
+                    if(total <= pageSize) {
+                        totalPage = 1
+                    } else {
+                        totalPage = Math.floor(total / pageSize) + 1;
                     }
                     return res.status(200).json({
                         msg: "Get blogs successfully!",
@@ -100,21 +88,17 @@ class BlogController {
                 }
                
             }
-            var list = await BlogModel.find({deleted: false}).exec();
             if(topicId) {
+                var list = await BlogModel.find({deleted: false, TopicId: topicId}).exec();
                 var newList = [];
-
                 for(const item of list) {
-                    if(item.TopicId == topicId) {
-                        let author = await AccountUserModel.findOne({
-                            id : item.AuthorId
-                        }).exec();
-                        newList.push({
-                            blog: item,
-                            author: author
-                        })
-                    }
-                    
+                    let author = await AccountUserModel.findOne({
+                        id : item.AuthorId
+                    }).exec();
+                    newList.push({
+                        blog: item,
+                        author: author
+                    })
                 }
                 total = newList.length;
                 if(total == pageSize) {
@@ -130,9 +114,9 @@ class BlogController {
                     pageIndex: pageIndex * 1,
                     products: newList,
                     totalPage: totalPage
-
                 })
             } else {
+                var list = await BlogModel.find({deleted: false}).exec();
                 var newList = [];
                 for(const item of list) {
                     let author = await AccountUserModel.findOne({
