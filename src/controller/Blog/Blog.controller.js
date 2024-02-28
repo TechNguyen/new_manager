@@ -250,6 +250,7 @@ class BlogController {
                 model: 'Topics', // Tên mô hình chủ đề
                 select: 'topicName' // Chọn các trường bạn muốn hiển thị, ví dụ: 'topicName', 'createat'
             }).exec();
+            
             if(Blog == null) {
                 return res.status(203).json({
                     msg: "Not exits blog",
