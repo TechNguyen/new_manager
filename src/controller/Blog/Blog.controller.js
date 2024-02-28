@@ -16,6 +16,7 @@ class BlogController {
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
+
             if(pageIndex && pageSize) {
                 if(topicId) {
                     var listTong = await BlogModel.find({deleted: false,TopicId: topicId}).exec();
@@ -234,23 +235,12 @@ class BlogController {
     async FindById(req,res,next) {
         try {
             const _id = req.query.id;
-            
             const Blog = await BlogModel.findOne(
                 {
                     _id: _id,
                     deleted: false
                 }
-            ).populate({
-                path: 'AuthorId', // Tên trường tham chiếu tới tác giả
-                model: 'accountusers', // Tên mô hình tác giả
-                select: 'username' // Chọn các trường bạn muốn hiển thị, ví dụ: 'username', 'createat'
-            })
-            .populate({
-                path: 'TopicId', // Tên trường tham chiếu tới chủ đề
-                model: 'Topics', // Tên mô hình chủ đề
-                select: 'topicName' // Chọn các trường bạn muốn hiển thị, ví dụ: 'topicName', 'createat'
-            }).exec();
-            
+            )
             if(Blog == null) {
                 return res.status(203).json({
                     msg: "Not exits blog",
@@ -336,29 +326,29 @@ class BlogController {
             const query = { Title: { $regex: regex } };
             
             const list = await BlogModel.find(query)
-            .populate({
-                path: 'AuthorId', // Tên trường tham chiếu tới tác giả
-                model: 'accountusers', // Tên mô hình tác giả
-                select: 'username' // Chọn các trường bạn muốn hiển thị, ví dụ: 'username', 'createat'
-            })
-            .populate({
-                path: 'TopicId', // Tên trường tham chiếu tới chủ đề
-                model: 'Topics', // Tên mô hình chủ đề
-                select: 'topicName' // Chọn các trường bạn muốn hiển thị, ví dụ: 'topicName', 'createat'
-            })
             .skip(skip)
-            .limit(limit);
-            
+            .limit(limit).exec();
+            var newListv1 = [];
+            for(const item of list) {
+                let author =  await AccountUserModel.findOne({
+                        _id : item.AuthorId
+                }).exec();
+                let topic = await toipicontrol.SearchTopic(item.TopicId);
+                newListv1.push({
+                    blog: item,
+                    author: author,
+                    topicInfor: topic
+                })
+            }
             const totalItem = await BlogModel.find(query).countDocuments();
             const totalPage = Math.ceil(totalItem / limit);
-            
             res.status(200).json({ 
-                success: true, 
-                data: list, 
-                pageSize: limit, 
-                pageIndex: page, 
-                totalItem: totalItem, 
-                totalPage 
+                msg: "Get products successfully!",
+                totalItem: totalItem,
+                pageSize: limit,
+                pageIndex: page,
+                products: newListv1,
+                totalPage: totalPage
             });
         } catch (error) {
             res.status(500).json({ success: false, message: "Đã xảy ra lỗi khi tìm kiếm bài đăng." });
