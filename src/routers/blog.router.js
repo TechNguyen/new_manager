@@ -11,4 +11,5 @@ router.get('/get', blog.GetBlogbyPage)
 router.put('/update/:id', blog.Update)
 router.delete('/deletesoft/:id', blog.DeleteSoft)
 router.delete('/delete/:id', blog.Delete)
+router.get('/find-by-title', blog.FindBlogByTittle)
 export default router;

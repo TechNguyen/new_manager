@@ -1,32 +1,30 @@
 import multer from "multer";
 import BlogModel from "../../model/Blog.model.js"
-import redis from 'redis'
+import { Redis } from 'ioredis'
 import AccountUserModel from "../../model/AccountUser.model.js";
+import TopicController from "../Topic/topic.controller.js";
 
-const client = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    username: process.env.REDIS_USER,
-    username: process.env.REDIS_USER
-  });
-  
-// Event listener to handle Redis errors
-client.on('error', (err) => {
-    console.error('Redis error:', err);
-});
+
+const toipicontrol = new TopicController();
+
+
+
+const redis = new Redis('rediss://red-cndj5s6n7f5s73blj3m0:gtsPFzBiA3wUMxWuYT1JASM1vLmwcKhW@frankfurt-redis.render.com:6379');
+
+
+
+
   
 class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
-            let { pageSize,pageIndex,topicId} = req.query;
+            let {pageSize,pageIndex,topicId} = req.query;
             if((pageSize * 1) <= 0 || !Boolean(pageSize)) {
                 pageSize = 10;
             }
             if((pageIndex * 1) <= 0 || !Boolean(pageIndex)) {
                 pageIndex = 1;
             }
-           
-
             if(pageIndex && pageSize) {
                 if(topicId) {
                     var listTong = await BlogModel.find({deleted: false,TopicId: topicId}).exec();
@@ -36,9 +34,12 @@ class BlogController {
                         let author =  await AccountUserModel.findOne({
                                 _id : item.AuthorId
                         }).exec();
+
+                        let topic = await toipicontrol.SearchTopic(item.TopicId);
                         newListv1.push({
                             blog: item,
-                            author: author
+                            author: author,
+                            topicInfor: topic
                         })
                     }
                     let totalPage;
@@ -64,9 +65,11 @@ class BlogController {
                         let author =  await AccountUserModel.findOne({
                                 _id : item.AuthorId
                         }).exec();
+                        let topic = await toipicontrol.SearchTopic(item.TopicId);
                         newListv1.push({
                             blog: item,
-                            author: author
+                            author: author,
+                            topicInfor: topic
                         })
                     }
                     let totalPage;
@@ -95,9 +98,12 @@ class BlogController {
                     let author = await AccountUserModel.findOne({
                         id : item.AuthorId
                     }).exec();
+                    let topic = await toipicontrol.SearchTopic(item.TopicId);
+
                     newList.push({
                         blog: item,
-                        author: author
+                        author: author,
+                        topicInfor: topic
                     })
                 }
                 total = newList.length;
@@ -105,7 +111,6 @@ class BlogController {
                     totalPage = 1;
                 } else  {
                     totalPage = Math.floor(total / pageSize) + 1;
-                    
                 }
                 return res.status(200).json({
                     msg: "Get products successfully!",
@@ -122,9 +127,12 @@ class BlogController {
                     let author = await AccountUserModel.findOne({
                         id : item.AuthorId
                     }).exec();
+                    let topic = await toipicontrol.SearchTopic(item.TopicId);
+
                     newList.push({
                         blog: item,
-                        author: author
+                        author: author,
+                        topicInfor: topic
                     })
                 }
                 total = newList.length;
@@ -235,7 +243,10 @@ class BlogController {
     async FindById(req,res,next) {
         try {
             const _id = req.query.id;
-            client.get(_id, async(err, cache) => {
+            redis.on('connect', function () {
+                console.log('Connect to redis');
+            });
+            redis.get(_id, async(err, cache) => {
                 if(err) {
                     return res.status(404).json({
                         msg: "Error in cache"
@@ -243,7 +254,7 @@ class BlogController {
                 }
                 if(cache) {
                     return res.status(200).json({
-                        data: JSON.parse(cachedBlog),
+                        data: JSON.parse(cache),
                         status: 200,
                         msg: "Get the cache successfully!"
                     });
@@ -260,12 +271,12 @@ class BlogController {
                             status: 203
                         })
                     } else {
-                        client.setEx(_id, 3600,JSON.stringify(Blog))
+                        redis.setex(_id, 3600, JSON.stringify(Blog));
                         return res.status(200).json({
                             data: Blog,
                             status: 200,
                             msg: "Get the blog successfully!"
-                        })
+                        });
                     }
                 }
             })
@@ -301,7 +312,52 @@ class BlogController {
             })
         }
     }
+
+
+    async FindBlogBy(req,res,next) {
+        try {
+            const _id = req.query.AuthorId;
+            const Blog = await BlogModel.findOne(
+                {
+                    deleted: false,
+                    AuthorId: _id
+                }
+            ).exec();
+            if(Blog == null) {
+                return res.status(203).json({
+                    msg: "Not exits blog",
+                    status: 203
+                })
+            }
+            return res.status(200).json({
+                data: Blog,
+                status: 200,
+                msg: "Get the blog successfully!"
+            })
+        } catch(error) {
+            return res.status(500).json({
+                msg: error.message
+            })
+        }
+    }
+
+
+    async FindBlogByTittle(req,res,next) {
+        try {
+            const title = req.query.title;
+            const regex = new RegExp(title, 'i');
+            const page = parseInt(req.query.pageIndex) || 1; 
+            const limit = parseInt(req.query.pageSize) || 10; 
+            const skip = (page - 1) * limit;
+            const list = await BlogModel.find({ Title: { $regex: regex } })
+                                         .skip(skip)
+                                         .limit(limit);
+            const totalItem = await BlogModel.find({ Title: { $regex: regex } }).countDocuments();
+            const totalPage = Math.ceil(totalItem / limit);
+            res.status(200).json({ success: true, data: list, pageSize: limit, pageIndex: page, totalItem: totalItem, totalPage });
+        } catch (error) {
+            res.status(500).json({ success: false, message: "Đã xảy ra lỗi khi tìm kiếm bài đăng." });
+        }
+    }
 }
-
-
 export default BlogController

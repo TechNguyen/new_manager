@@ -69,17 +69,32 @@ class TopicController {
             let id =  req.params.id;
             const topic = await TopicModel.findByIdAndDelete(id).exec();
             return topic != null ? res.status(200).json({
-                msg: " Get the message succesfully!",
-                data: topic
+                msg: "Delete succesfully!",
+                data: topic,
+                status: 200
             }) : res.status(204).json({
-                msg: "Not exits data"
+                msg: "Not exits topic",
+                status: 204
             })
         } catch(error) {
             return res.status(500).json({
-                msg: error
+                msg: error,
+                status: 500
             })
         }
     }
+
+    async SearchTopic(topicId){
+        try{
+            const topic = await TopicModel.findOne({
+                _id: topicId
+            }).exec();
+            return topic != null ? topic : null;
+        } catch(error) {
+            return null;
+        }
+    }
+
 }
 
 
