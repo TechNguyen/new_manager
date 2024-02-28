@@ -1,20 +1,11 @@
 import multer from "multer";
 import BlogModel from "../../model/Blog.model.js"
-import { Redis } from 'ioredis'
 import AccountUserModel from "../../model/AccountUser.model.js";
 import TopicController from "../Topic/topic.controller.js";
 
 
 const toipicontrol = new TopicController();
 
-
-
-const redis = new Redis('rediss://red-cndj5s6n7f5s73blj3m0:gtsPFzBiA3wUMxWuYT1JASM1vLmwcKhW@frankfurt-redis.render.com:6379');
-
-
-
-
-  
 class BlogController {
     async GetBlogbyPage(req,res,next) {
         try {
@@ -243,43 +234,24 @@ class BlogController {
     async FindById(req,res,next) {
         try {
             const _id = req.query.id;
-            redis.on('connect', function () {
-                console.log('Connect to redis');
-            });
-            redis.get(_id, async(err, cache) => {
-                if(err) {
-                    return res.status(404).json({
-                        msg: "Error in cache"
-                    })
+            const Blog = await BlogModel.findOne(
+                {
+                    _id: _id,
+                    deleted: false
                 }
-                if(cache) {
-                    return res.status(200).json({
-                        data: JSON.parse(cache),
-                        status: 200,
-                        msg: "Get the cache successfully!"
-                    });
-                } else {
-                    const Blog = await BlogModel.findOne(
-                        {
-                            _id: _id,
-                            deleted: false
-                        }
-                    ).exec();
-                    if(Blog == null) {
-                        return res.status(203).json({
-                            msg: "Not exits blog",
-                            status: 203
-                        })
-                    } else {
-                        redis.setex(_id, 3600, JSON.stringify(Blog));
-                        return res.status(200).json({
-                            data: Blog,
-                            status: 200,
-                            msg: "Get the blog successfully!"
-                        });
-                    }
-                }
-            })
+            ).exec();
+            if(Blog == null) {
+                return res.status(203).json({
+                    msg: "Not exits blog",
+                    status: 203
+                })
+            } else {
+                return res.status(200).json({
+                    data: Blog,
+                    status: 200,
+                    msg: "Get the blog successfully!"
+                });
+            }
         } catch(error) {
             return res.status(500).json({
                 msg: error.message
