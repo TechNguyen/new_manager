@@ -234,12 +234,22 @@ class BlogController {
     async FindById(req,res,next) {
         try {
             const _id = req.query.id;
+            
             const Blog = await BlogModel.findOne(
                 {
                     _id: _id,
                     deleted: false
                 }
-            ).exec();
+            ).populate({
+                path: 'AuthorId', // Tên trường tham chiếu tới tác giả
+                model: 'accountusers', // Tên mô hình tác giả
+                select: 'username' // Chọn các trường bạn muốn hiển thị, ví dụ: 'username', 'createat'
+            })
+            .populate({
+                path: 'TopicId', // Tên trường tham chiếu tới chủ đề
+                model: 'Topics', // Tên mô hình chủ đề
+                select: 'topicName' // Chọn các trường bạn muốn hiển thị, ví dụ: 'topicName', 'createat'
+            }).exec();
             if(Blog == null) {
                 return res.status(203).json({
                     msg: "Not exits blog",
@@ -321,12 +331,34 @@ class BlogController {
             const page = parseInt(req.query.pageIndex) || 1; 
             const limit = parseInt(req.query.pageSize) || 10; 
             const skip = (page - 1) * limit;
-            const list = await BlogModel.find({ Title: { $regex: regex } })
-                                         .skip(skip)
-                                         .limit(limit);
-            const totalItem = await BlogModel.find({ Title: { $regex: regex } }).countDocuments();
+            
+            const query = { Title: { $regex: regex } };
+            
+            const list = await BlogModel.find(query)
+            .populate({
+                path: 'AuthorId', // Tên trường tham chiếu tới tác giả
+                model: 'accountusers', // Tên mô hình tác giả
+                select: 'username' // Chọn các trường bạn muốn hiển thị, ví dụ: 'username', 'createat'
+            })
+            .populate({
+                path: 'TopicId', // Tên trường tham chiếu tới chủ đề
+                model: 'Topics', // Tên mô hình chủ đề
+                select: 'topicName' // Chọn các trường bạn muốn hiển thị, ví dụ: 'topicName', 'createat'
+            })
+            .skip(skip)
+            .limit(limit);
+            
+            const totalItem = await BlogModel.find(query).countDocuments();
             const totalPage = Math.ceil(totalItem / limit);
-            res.status(200).json({ success: true, data: list, pageSize: limit, pageIndex: page, totalItem: totalItem, totalPage });
+            
+            res.status(200).json({ 
+                success: true, 
+                data: list, 
+                pageSize: limit, 
+                pageIndex: page, 
+                totalItem: totalItem, 
+                totalPage 
+            });
         } catch (error) {
             res.status(500).json({ success: false, message: "Đã xảy ra lỗi khi tìm kiếm bài đăng." });
         }
