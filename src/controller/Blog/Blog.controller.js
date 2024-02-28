@@ -240,7 +240,18 @@ class BlogController {
                     _id: _id,
                     deleted: false
                 }
-            )
+            ).populate({
+                path: 'AuthorId',
+                model: 'accountusers',
+                select: 'username'
+            }).populate(
+                {
+                    path: 'TopicId',
+                    model: 'Topics',
+                    select: 'topicName'
+                }
+            ).exec()
+           
             if(Blog == null) {
                 return res.status(203).json({
                     msg: "Not exits blog",
@@ -248,9 +259,9 @@ class BlogController {
                 })
             } else {
                 return res.status(200).json({
+                    msg: "Get products successfully!",
                     data: Blog,
-                    status: 200,
-                    msg: "Get the blog successfully!"
+                    status: 200
                 });
             }
         } catch(error) {
